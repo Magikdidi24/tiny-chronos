@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/Magikdidi24/tiny-chronos/actions/workflows/tests.yml/badge.svg)](https://github.com/Magikdidi24/tiny-chronos/actions/workflows/tests.yml)
 
-A small version of [Chronos](https://arxiv.org/abs/2403.07815), the model that does time series forecasting as language modeling: you scale the series, cut the values into bins and train a transformer to predict the next bin. Mine has 5.4M params and is trained only on synthetic data. I test it zero-shot on ETTh1 and ETTm1.
+A small version of [Chronos](https://arxiv.org/abs/2403.07815), the model that does time series forecasting as language modeling: you scale the series, cut the values into bins and train a transformer to predict the next bin. Mine has 5.35M params and is trained only on synthetic data. I test it zero-shot on ETTh1 and ETTm1.
 
 ## How it works
 
