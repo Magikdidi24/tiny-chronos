@@ -1,0 +1,4 @@
+torch>=2.7  # first release that runs on RTX 50 cards
+numpy
+matplotlib
+pytest
