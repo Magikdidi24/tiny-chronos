@@ -14,6 +14,7 @@ URL = "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/{}.c
 DATASETS = {"ETTh1": 24, "ETTm1": 96}  # season = one day
 QUANTILES = np.arange(1, 10) / 10
 METHODS = ["tiny-chronos", "seasonal naive", "naive"]
+MASE_CONTEXT = 256  # MASE scale from the last 256 context points like in v1, so v1 and v2 scores can be compared
 
 
 def load(name):
@@ -117,7 +118,8 @@ def main():
                 "naive": (last, last[None]),
             }
             for m, (point, quantiles) in forecasts.items():
-                scores[m].append(np.stack([mase(future, point, context, season), wql(future, quantiles)], 1))
+                scores[m].append(np.stack([mase(future, point, context[:, -MASE_CONTEXT:], season),
+                                           wql(future, quantiles)], 1))
             examples.append((column, context[0], future[0], samples[0]))
 
         scores = {m: np.concatenate(s) for m, s in scores.items()}  # (all windows, [mase, wql])

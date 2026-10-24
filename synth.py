@@ -35,7 +35,7 @@ def random_kernel(bank, rng):
     return kernel
 
 
-def kernel_synth(n, length=512, seed=0, batch=128):
+def kernel_synth(n, length=1024, seed=0, batch=128):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     rng, gen = random.Random(seed), torch.Generator(device).manual_seed(seed)
     bank = kernel_bank(length, device)
@@ -68,7 +68,7 @@ def plot(series, path="assets/synthetic_samples.png"):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--n", type=int, default=100_000, help="number of series")
-    p.add_argument("--length", type=int, default=512)
+    p.add_argument("--length", type=int, default=1024)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--plot", action="store_true", help="also plot 8 series to assets/synthetic_samples.png")
     args = p.parse_args()

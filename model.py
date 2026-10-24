@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # uniform bins over [-LIMIT, LIMIT], after mean scaling
-N_BINS = 1024
+N_BINS = 4096
 LIMIT = 15.0
 
 
@@ -28,10 +28,10 @@ def decode(tokens, scale):
 
 @dataclass
 class ModelConfig:
-    dim: int = 256
-    n_layers: int = 6
-    n_heads: int = 8
-    max_len: int = 320  # context + horizon tokens
+    dim: int = 384
+    n_layers: int = 8
+    n_heads: int = 6
+    max_len: int = 576  # context + horizon tokens
 
 
 class TinyChronos(nn.Module):
@@ -57,11 +57,13 @@ class TinyChronos(nn.Module):
     def num_params(self):
         return sum(p.numel() for p in self.parameters())
 
-    def forward(self, idx, targets=None):
+    def forward(self, idx, targets=None, last_only=False):
         T = idx.size(1)
         x = self.tok_emb(idx) + self.pos_emb(torch.arange(T, device=idx.device))
         mask = nn.Transformer.generate_square_subsequent_mask(T, device=idx.device)
-        logits = self.head(self.blocks(x, mask=mask, is_causal=True))
+        x = self.blocks(x, mask=mask, is_causal=True)
+        # sampling only needs the next token, full logits would be 576 x 4096 per sequence at every step
+        logits = self.head(x[:, -1:] if last_only else x)
         loss = None if targets is None else F.cross_entropy(logits.flatten(0, 1).float(), targets.flatten())
         return logits, loss
 
@@ -74,6 +76,6 @@ class TinyChronos(nn.Module):
         tokens = encode(context.repeat_interleave(n_samples, 0), scale)
         # no kv cache, fine for short horizons
         for _ in range(horizon):
-            probs = F.softmax(self(tokens)[0][:, -1] / temperature, -1)
+            probs = F.softmax(self(tokens, last_only=True)[0][:, -1] / temperature, -1)
             tokens = torch.cat([tokens, torch.multinomial(probs, 1)], 1)
         return decode(tokens[:, -horizon:], scale).view(len(context), n_samples, horizon)
