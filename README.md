@@ -4,11 +4,11 @@
 
 A small version of [Chronos](https://arxiv.org/abs/2403.07815), the model that does time series forecasting as language modeling: you scale the series, cut the values into bins and train a transformer to predict the next bin. Mine has 17.6M params and is trained on real and synthetic series. I test it zero-shot on ETTh1 and ETTm1.
 
-This is v2. v1 was trained only on synthetic data and lost to seasonal naive. v2 adds real data and a bigger model, and the results of both are below.
+This is v2. v1 was trained only on synthetic data and lost to seasonal naive on MASE, with WQL about a tie. v2 adds real data and a bigger model, and the results of both are below.
 
 ## What changed in v2
 
-v1 predicted flat lines and missed the sharp daily dips of ETTh1. Gaussian processes don't really make spikes or sudden level changes like these, so real data was the first thing to add. Most windows now come from 5 real datasets, mixed with TSMixup, the augmentation Chronos uses to get more variety out of a limited set of datasets. KernelSynth stays, but only for 10% of the windows like in the paper.
+v1 predicted flat lines on HUFL and MUFL and missed the sharp daily dips of ETTh1. Gaussian processes don't really make spikes or sudden level changes like these, so real data was the first thing to add. Most windows now come from 5 real datasets, mixed with TSMixup, the augmentation Chronos uses to get more variety out of a limited set of datasets. KernelSynth stays, but only for 10% of the windows like in the paper.
 
 The rest brings it closer to the Chronos setup. The context goes from 256 to 512 points, the length Chronos uses. On ETTm1, 256 points were less than 3 days and 512 is more than 5. The bins go from 1024 to 4096 (Chronos has 4094 plus 2 special tokens), so a bin is under 1% of the context's mean absolute value instead of 3%. With more varied data and longer windows I made the model bigger too: 8 layers of width 384 instead of 6 of width 256, so 17.6M params instead of 5.35M. That's a bit less than Chronos-T5 Mini (20M). It trains for 30k steps instead of 20k, with lr 5e-4 instead of 1e-3.
 
@@ -47,7 +47,7 @@ v1 is the 5.35M param model (6 layers, width 256, 1024 bins, 256 context points)
 | ETTm1 | seasonal naive | 1.070 | 0.316 | 1.000 | 1.000 |
 | ETTm1 | naive | 1.796 | 0.584 | 1.469 | 1.469 |
 
-v2 is better than v1 in both rel. columns on both datasets. On WQL it now beats seasonal naive window by window (rel. WQL 0.94 and 0.92), and on ETTh1 even the plain average WQL is a bit lower (0.331 against 0.335). The point forecasts still lose: rel. MASE is 1.17 and 1.13, so 13 to 17% worse than repeating the last day. On ETTm1 the plain averages didn't move much (MASE 1.359 against 1.329, WQL 0.337 against 0.333), the gain there only shows in the per-window ratios.
+v2 is better than v1 in both rel. columns on both datasets. On rel. WQL it now beats seasonal naive (0.94 and 0.92), and on ETTh1 even the plain average WQL is a bit lower (0.331 against 0.335). The point forecasts still lose: rel. MASE is 1.17 and 1.13, so 13 to 17% worse than repeating the last day. On ETTm1 the plain averages are even a bit worse than v1 (MASE 1.359 against 1.329, WQL 0.337 against 0.333), so the gain there only shows in the per-window ratios.
 
 ![ETTh1 forecasts of v2](assets/forecast_etth1.png)
 
@@ -55,7 +55,7 @@ ETTh1 has these sharp dips every day. v2 now follows the daily cycle of LUFL, bu
 
 ![ETTm1 forecasts of v2](assets/forecast_ettm1.png)
 
-On ETTm1, v1 got the MUFL forecast completely wrong (around -10 while the real value stays near 10). v2 gets that one right. The v1 plots are in [assets/v1](assets/v1).
+On ETTm1, v1 got the MUFL forecast wrong (around -10 while the real value stays near 10). v2 gets the level right. The v1 plots are in [assets/v1](assets/v1).
 
 ## Running it
 
